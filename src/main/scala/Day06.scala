@@ -9,10 +9,7 @@ object Day06 extends App {
   private def findMarker(input: String, markerLength: Int): Long = {
     val marker = input
       .sliding(markerLength)
-      .find { sequence =>
-        val sortedSequence = sequence.sorted
-        sortedSequence.replaceFirst("(.)\\1+", "") == sortedSequence
-      }
+      .find(_.toSet.size == markerLength)
       .get
     input.indexOf(marker) + markerLength
   }
