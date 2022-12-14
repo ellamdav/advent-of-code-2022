@@ -1,3 +1,4 @@
+import scala.annotation.tailrec
 import scala.io.Source
 
 object Day14 extends App {
@@ -14,6 +15,7 @@ object Day14 extends App {
       .map(line(_))
       .fold(Map.empty)(_ ++ _)
 
+  @tailrec
   private def line(points: List[List[Int]], acc: Map[(Int, Int), Char] = Map.empty): Map[(Int, Int), Char] =
     points match {
       case start :: end :: Nil if start == end => addToSeam(acc, start)
@@ -33,9 +35,10 @@ object Day14 extends App {
     acc + ((position.head, position.last) -> '#')
 
   def part1(input: Seq[String]): Long = {
-    val grid = parse(input)
+    val grid     = parse(input)
     printMap(grid)
-    flow(grid)
+    val overflow = grid.keys.map(_._2).max + 1
+    flow(grid, overflow)
   }
 
   def printMap(grid: Map[(Int, Int), Char]): Unit = {
@@ -52,9 +55,10 @@ object Day14 extends App {
     println("-------------")
   }
 
-  def flow(grid: Map[(Int, Int), Char], units: Int = 0, sand: (Int, Int) = (500, 0)): Int = {
-    val flowDirections = List(0, -1, 1)
-    val overflow       = grid.keys.map(_._2).max + 1
+  lazy val flowDirections = List(0, -1, 1)
+
+  @tailrec
+  def flow(grid: Map[(Int, Int), Char], overflow: Int, units: Int = 0, sand: (Int, Int) = (500, 0)): Int =
     sand match {
       case (_, `overflow`) =>
         printMap(grid)
@@ -70,12 +74,11 @@ object Day14 extends App {
               printMap(newGrid)
               units + 1
             } else {
-              flow(newGrid, units + 1)
+              flow(newGrid, overflow, units + 1)
             }
-          case Some(flowableDirection) => flow(grid, units, (sand._1 + flowableDirection, sand._2 + 1))
+          case Some(flowableDirection) => flow(grid, overflow, units, (sand._1 + flowableDirection, sand._2 + 1))
         }
     }
-  }
 
   def part2(input: Seq[String]): Long = {
     val grid          = parse(input)
@@ -85,7 +88,7 @@ object Day14 extends App {
     val buffer        = 1000
     val gridWithFloor = grid ++ line(List(List(minx - buffer, maxy + 2), List(maxx + buffer, maxy + 2)))
     printMap(gridWithFloor)
-    flow(gridWithFloor)
+    flow(gridWithFloor, Int.MaxValue)
   }
 
   val input = Source.fromResource("Day14.txt").getLines().toSeq
